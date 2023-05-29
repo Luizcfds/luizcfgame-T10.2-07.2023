@@ -1,12 +1,16 @@
 import pygame
 import os
+import random
 
 pygame.init()
 
 #Global constants
-SCREEN_HEIGHT = 600
-SCREEN_WIDTH = 1100
-SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+X = 1280
+Y = 720
+SCREEN_WIDTH = X
+
+SCREEN = pygame.display.set_mode((X, Y))
+pygame.display.set_caption("My Game")
 
 RUNNING = [pygame.image.load(os.path.join("Assets/Char", "CharRun1.png")), 
            pygame.image.load(os.path.join("Assets/Char", "CharRun2.png"))]
@@ -24,14 +28,37 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
            pygame.image.load(os.path.join("Assets/Bird", "Bird3.png"))]
 
 CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
+CLOUD = pygame.transform.scale(CLOUD, (350, 150))
 
-BG = pygame.image.load(os.path.join("Assets/Other", "bg1.png"))
+BG = pygame.image.load(os.path.join("Assets/Other", "bg.png")).convert_alpha()
+BG = pygame.transform.scale(BG, (X, Y))
+
+
+
+
+class Cloud:
+    def __init__(self):
+        self.x = SCREEN_WIDTH + random.randint(800, 1000)
+        self.y = random.randint(50, 50)
+        self.image = CLOUD
+        self.width = self.image.get_width()
+        
+    def update(self):
+        self.x -= game_speed
+        if self.x < -self.width:
+            self.x = SCREEN_WIDTH + random.randint(2000, 2500)
+            self.y = random.randint(50, 50)
+        
+    def draw(self, SCREEN):
+        SCREEN.blit(self.image, (self.x, self.y))
+
+
 
 
 class Character:
     X_POS = 80
-    Y_POS = 310
-    Y_POS_DUCK = 340
+    Y_POS = 400
+    Y_POS_DUCK = 460
     JUMP_VEL = 8.5
 
     def __init__(self):
@@ -48,7 +75,7 @@ class Character:
         self.image = self.run_img[0]
         self.char_rect = self.image.get_rect()
         self.char_rect.x = self.X_POS
-        self.char_rect.y - self.Y_POS
+        self.char_rect.y = self.Y_POS
         
     def update(self, userInput):
         if self.char_duck:
@@ -108,9 +135,15 @@ class Character:
 
 
 def main():
+    global game_speed
     run = True
     clock = pygame.time.Clock()
+    cloud1 = Cloud()
+    cloud2 = Cloud()
     player = Character()
+    game_speed = 30
+    x = 0
+    
    
     while run:
         for event in pygame.event.get():
@@ -118,10 +151,28 @@ def main():
                 run = False
                 
         SCREEN.fill((255, 255, 255))
-        userInput = pygame.key.get_pressed()         
+        userInput = pygame.key.get_pressed()    
+        
+        SCREEN.blit(BG, (0,0))
+        
+        rel_x = x % BG.get_rect().width
+        SCREEN.blit(BG, (rel_x - BG.get_rect().width,0))
+        if rel_x < 1280:
+            SCREEN.blit(BG, (rel_x, 0))   
+        
+        #x -=20        
+    
+    
+        cloud1.draw(SCREEN)
+        cloud1.update()
+        
+        cloud2.draw(SCREEN)
+        cloud2.update()
+
     
         player.draw(SCREEN)
         player.update(userInput)
+        
         
         clock.tick(30)
         pygame.display.update()
