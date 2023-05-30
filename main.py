@@ -20,8 +20,14 @@ JUMMPING = pygame.image.load(os.path.join("Assets/Char", "CharJump.png"))
 DUCKING = [pygame.image.load(os.path.join("Assets/Char", "CharDuck1.png")),
            pygame.image.load(os.path.join("Assets/Char", "CharDuck2.png"))]
 
-SMALL_TRAP = pygame.image.load(os.path.join("Assets/Traps", "SmallTrap.png"))
-LARGE_TRAP = pygame.image.load(os.path.join("Assets/Traps", "LargeTrap.png"))
+SMALL_TRAP = [pygame.image.load(os.path.join("Assets/Traps", "SmallTrap1.png")),
+              pygame.image.load(os.path.join("Assets/Traps", "SmallTrap2.png")),
+              pygame.image.load(os.path.join("Assets/Traps", "SmallTrap3.png"))]
+
+
+LARGE_TRAP = [pygame.image.load(os.path.join("Assets/Traps", "LargeTrap1.png")),
+              pygame.image.load(os.path.join("Assets/Traps", "LargeTrap2.png")),
+              pygame.image.load(os.path.join("Assets/Traps", "LargeTrap3.png"))]
 
 BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")), 
            pygame.image.load(os.path.join("Assets/Bird", "Bird2.png")), 
@@ -131,19 +137,79 @@ class Character:
      SCREEN.blit(self.image, (self.char_rect.x, self.char_rect.y))
 
 
+class Obstacle:
+    def __init__(self, image, type):
+        self.image = image
+        self.type = type
+        self.rect = self.image[self.type].get_rect()
+        self.rect.x = SCREEN_WIDTH
+    
+    def update(self):
+        self.rect.x -= game_speed
+        if self.rect.x < -self.rect.width:
+            obstacles.pop()
+            
+    
+    def draw(self, SCREEN):
+        SCREEN.blit(self.image[self.type], self.rect)
+
+
+class SmallTrap(Obstacle):
+    def __init__(self, image):
+        self.type = random.randint(0, 2)
+        super().__init__(image, self.type)
+        self.rect.y = 480
+        
+       
+       
+        
+class LargeTrap(Obstacle):
+    def __init__(self, image):
+        self.type = random.randint(0, 2)
+        super().__init__(image, self.type)
+        self.rect.y = 490
+ 
+
+class Bird(Obstacle):
+    def __init__(self, image):
+        self.type = 0
+        super().__init__(image, self.type)
+        self.rect.y = 325
+        self.index = 0
+        
+    def draw(self, SCREEN):
+        if self.index >= 9:
+            self.index = 0
+        SCREEN.blit(self.image[self.index//5], self.rect)
+        self.index += 1
+
+
 
 
 
 def main():
-    global game_speed
+    global game_speed, points, obstacles
     run = True
     clock = pygame.time.Clock()
     cloud1 = Cloud()
     cloud2 = Cloud()
     player = Character()
     game_speed = 30
+    points = 0
     x = 0
+    font = pygame.font.Font("Assets/fonts/PixelGameFont.ttf", 20)
+    obstacles = []
     
+    def score():
+        global points, game_speed
+        points += 1
+        if points % 100 == 0:
+            game_speed += 1
+            
+        text = font.render("Points: " + str(points), True, (255, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (1200, 40)
+        SCREEN.blit(text, textRect)
    
     while run:
         for event in pygame.event.get():
@@ -160,7 +226,7 @@ def main():
         if rel_x < 1280:
             SCREEN.blit(BG, (rel_x, 0))   
         
-        #x -=20        
+        x -= game_speed      
     
     
         cloud1.draw(SCREEN)
@@ -172,6 +238,24 @@ def main():
     
         player.draw(SCREEN)
         player.update(userInput)
+        
+        
+        if len(obstacles) == 0:
+            if random.randint(0, 2) == 0:
+                obstacles.append(SmallTrap(SMALL_TRAP))
+            elif random.randint(0, 2) == 1:
+                obstacles.append(LargeTrap(LARGE_TRAP))
+            elif random.randint(0, 2) == 2:
+                obstacles.append(Bird(BIRD))
+                
+        for obstacle in obstacles:
+            obstacle.draw(SCREEN)
+            obstacle.update()
+            if player.char_rect.colliderect(obstacle.rect):
+                pygame.draw.rect(SCREEN, (255, 0, 0), player.char_rect, 2)
+        
+        
+        score()
         
         
         clock.tick(30)
